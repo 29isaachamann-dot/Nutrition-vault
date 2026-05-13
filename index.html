@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nutrition Vault</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gray: { 850: '#1f2937', 950: '#0b0f19' },
+                        macro: { pro: '#3b82f6', fat: '#22c55e', carb: '#eab308', cal: '#a855f7' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for stealth look */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0f19; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        body { -webkit-tap-highlight-color: transparent; }
+        .progress-bar { transition: width 0.5s ease-out; }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 font-sans h-screen flex flex-col overflow-hidden">
+
+    <header class="bg-gray-900 p-4 border-b border-gray-800 flex justify-between items-center shadow-md z-10">
+        <h1 class="text-xl font-bold tracking-wider"><i class="fa-solid fa-shield-halved text-macro-cal mr-2"></i>Vault</h1>
+        <div id="header-date" class="text-sm text-gray-400 font-medium"></div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto pb-24 p-4" id="main-content">
+        
+        <section id="view-dashboard" class="space-y-6 block">
+            <div class="bg-gray-900 p-5 rounded-2xl border border-gray-800 shadow-lg">
+                <h2 class="text-lg font-semibold mb-4 text-gray-300">Daily Progress</h2>
+                
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-400"><i class="fa-solid fa-fire text-macro-cal mr-1"></i> Calories</span>
+                        <span id="text-cal" class="font-bold">0 / 2000</span>
+                    </div>
+                    <div class="w-full bg-gray-800 rounded-full h-3">
+                        <div id="bar-cal" class="bg-macro-cal h-3 rounded-full progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-400"><i class="fa-solid fa-drumstick-bite text-macro-pro mr-1"></i> Protein</span>
+                            <span id="text-pro" class="font-bold text-gray-300">0g / 150g</span>
+                        </div>
+                        <div class="w-full bg-gray-800 rounded-full h-2">
+                            <div id="bar-pro" class="bg-macro-pro h-2 rounded-full progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-400"><i class="fa-solid fa-wheat-awn text-macro-carb mr-1"></i> Carbs</span>
+                            <span id="text-carb" class="font-bold text-gray-300">0g / 200g</span>
+                        </div>
+                        <div class="w-full bg-gray-800 rounded-full h-2">
+                            <div id="bar-carb" class="bg-macro-carb h-2 rounded-full progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-400"><i class="fa-solid fa-droplet text-macro-fat mr-1"></i> Fats</span>
+                            <span id="text-fat" class="font-bold text-gray-300">0g / 65g</span>
+                        </div>
+                        <div class="w-full bg-gray-800 rounded-full h-2">
+                            <div id="bar-fat" class="bg-macro-fat h-2 rounded-full progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-900 p-5 rounded-2xl border border-gray-800 shadow-lg">
+                <h2 class="text-lg font-semibold mb-3 text-gray-300">Quick Add Calories</h2>
+                <div class="flex space-x-2">
+                    <input type="number" id="quick-cal-input" placeholder="e.g. 250" class="flex-1 bg-gray-800 text-white rounded-xl px-4 py-3 border border-gray-700 focus:outline-none focus:border-macro-cal text-lg">
+                    <button onclick="quickAdd()" class="bg-gray-800 hover:bg-gray-700 text-macro-cal border border-gray-700 rounded-xl px-6 py-3 font-bold transition-colors">
+                        <i class="fa-solid fa-plus"></i> Add
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <h2 class="text-sm font-semibold mb-3 text-gray-500 uppercase tracking-wider">Today's Entries</h2>
+                <div id="today-logs" class="space-y-3">
+                    </div>
+            </div>
+        </section>
+
+        <section id="view-search" class="hidden space-y-4">
+            <div class="relative">
+                <input type="text" id="search-input" placeholder="Search Open Food Facts..." class="w-full bg-gray-900 text-white rounded-2xl pl-12 pr-4 py-4 border border-gray-800 focus:outline-none focus:border-macro-pro text-lg shadow-lg">
+                <i class="fa-solid fa-search absolute left-4 top-5 text-gray-500"></i>
+            </div>
+            <button onclick="searchFood()" class="w-full bg-macro-pro hover:bg-blue-600 text-white rounded-2xl py-4 font-bold text-lg shadow-lg transition-colors">
+                Search Database
+            </button>
+            
+            <div id="search-spinner" class="hidden text-center py-4 text-gray-500">
+                <i class="fa-solid fa-circle-notch fa-spin text-2xl"></i>
+            </div>
+
+            <div id="search-results" class="space-y-3 mt-4">
+                </div>
+        </section>
+
+        <section id="view-history" class="hidden space-y-4">
+            <h2 class="text-xl font-bold mb-4 text-gray-300">Last 7 Days</h2>
+            <div id="history-list" class="space-y-4">
+                </div>
+        </section>
+    </main>
+
+    <nav class="fixed bottom-0 w-full bg-gray-900 border-t border-gray-800 pb-safe z-20">
+        <div class="flex justify-around items-center p-2">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn flex flex-col items-center p-2 text-macro-pro flex-1">
+                <i class="fa-solid fa-chart-pie text-xl mb-1"></i>
+                <span class="text-xs font-medium">Dash</span>
+            </button>
+            <button onclick="switchTab('search')" id="nav-search" class="nav-btn flex flex-col items-center p-2 text-gray-500 hover:text-gray-300 flex-1 transition-colors">
+                <i class="fa-solid fa-magnifying-glass text-xl mb-1"></i>
+                <span class="text-xs font-medium">Search</span>
+            </button>
+            <button onclick="switchTab('history')" id="nav-history" class="nav-btn flex flex-col items-center p-2 text-gray-500 hover:text-gray-300 flex-1 transition-colors">
+                <i class="fa-solid fa-clock-rotate-left text-xl mb-1"></i>
+                <span class="text-xs font-medium">History</span>
+            </button>
+        </div>
+    </nav>
+
+    <div id="grams-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-900 rounded-2xl border border-gray-800 w-full max-w-sm overflow-hidden shadow-2xl">
+            <div class="p-5">
+                <h3 id="modal-food-name" class="text-lg font-bold text-white mb-1 truncate">Food Name</h3>
+                <p class="text-xs text-gray-400 mb-4">Enter portion size to calculate macros</p>
+                
+                <div class="flex items-center space-x-3 mb-6">
+                    <input type="number" id="grams-input" placeholder="100" value="100" class="flex-1 bg-gray-800 text-white rounded-xl px-4 py-3 border border-gray-700 focus:outline-none focus:border-macro-pro text-xl text-center">
+                    <span class="text-gray-400 font-bold text-lg">grams</span>
+                </div>
+                
+                <div class="bg-gray-800 rounded-xl p-3 flex justify-between text-xs mb-6 border border-gray-700">
+                    <div class="text-center"><span class="block text-gray-400">Cal</span><span id="prev-cal" class="font-bold text-macro-cal">0</span></div>
+                    <div class="text-center"><span class="block text-gray-400">Pro</span><span id="prev-pro" class="font-bold text-macro-pro">0g</span></div>
+                    <div class="text-center"><span class="block text-gray-400">Carb</span><span id="prev-carb" class="font-bold text-macro-carb">0g</span></div>
+                    <div class="text-center"><span class="block text-gray-400">Fat</span><span id="prev-fat" class="font-bold text-macro-fat">0g</span></div>
+                </div>
+
+                <div class="flex space-x-3">
+                    <button onclick="closeModal()" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl py-3 font-bold transition-colors">Cancel</button>
+                    <button onclick="addSelectedFood()" class="flex-1 bg-macro-pro hover:bg-blue-600 text-white rounded-xl py-3 font-bold transition-colors">Add to Log</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- State & Goals ---
+        const GOALS = { cal: 2000, pro: 150, carb: 200, fat: 65 };
+        let vaultData = JSON.parse(localStorage.getItem('nutrition_vault')) || {};
+        let selectedFood = null; // Holds temporary API data
+
+        // --- Init ---
+        const getTodayString = () => new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local
+        
+        function init() {
+            const today = getTodayString();
+            document.getElementById('header-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            
+            if (!vaultData[today]) {
+                vaultData[today] = { cal: 0, pro: 0, carb: 0, fat: 0, logs: [] };
+                saveData();
+            }
+            updateDashboard();
+        }
+
+        function saveData() {
+            localStorage.setItem('nutrition_vault', JSON.stringify(vaultData));
+        }
+
+        // --- Navigation ---
+        function switchTab(tabId) {
+            ['dashboard', 'search', 'history'].forEach(tab => {
+                document.getElementById(`view-${tab}`).classList.add('hidden');
+                document.getElementById(`nav-${tab}`).classList.remove('text-macro-pro');
+                document.getElementById(`nav-${tab}`).classList.add('text-gray-500');
+            });
+            
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabId}`).classList.remove('text-gray-500');
+            document.getElementById(`nav-${tabId}`).classList.add('text-macro-pro');
+
+            if (tabId === 'history') renderHistory();
+            if (tabId === 'dashboard') updateDashboard();
+        }
+
+        // --- Dashboard & UI Updates ---
+        function updateDashboard() {
+            const today = getTodayString();
+            const data = vaultData[today];
+
+            // Update Text
+            document.getElementById('text-cal').innerText = `${Math.round(data.cal)} / ${GOALS.cal}`;
+            document.getElementById('text-pro').innerText = `${Math.round(data.pro)}g / ${GOALS.pro}g`;
+            document.getElementById('text-carb').innerText = `${Math.round(data.carb)}g / ${GOALS.carb}g`;
+            document.getElementById('text-fat').innerText = `${Math.round(data.fat)}g / ${GOALS.fat}g`;
+
+            // Update Bars
+            document.getElementById('bar-cal').style.width = `${Math.min(100, (data.cal / GOALS.cal) * 100)}%`;
+            document.getElementById('bar-pro').style.width = `${Math.min(100, (data.pro / GOALS.pro) * 100)}%`;
+            document.getElementById('bar-carb').style.width = `${Math.min(100, (data.carb / GOALS.carb) * 100)}%`;
+            document.getElementById('bar-fat').style.width = `${Math.min(100, (data.fat / GOALS.fat) * 100)}%`;
+
+            // Render Today's Logs
+            const logContainer = document.getElementById('today-logs');
+            logContainer.innerHTML = '';
+            
+            if(data.logs.length === 0) {
+                logContainer.innerHTML = `<p class="text-gray-600 text-sm italic">No entries yet. Add some fuel.</p>`;
+                return;
+            }
+
+            // Reverse to show newest first
+            [...data.logs].reverse().forEach((log, index) => {
+                logContainer.innerHTML += `
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-3 flex justify-between items-center">
+                        <div class="truncate pr-4">
+                            <p class="font-medium text-gray-200 truncate">${log.name}</p>
+                            <p class="text-xs text-gray-500">${log.amount ? log.amount + 'g' : 'Quick Add'}</p>
+                        </div>
+                        <div class="text-right whitespace-nowrap">
+                            <p class="font-bold text-macro-cal">${Math.round(log.cal)} kcal</p>
+                            <p class="text-xs text-gray-500">
+                                <span class="text-macro-pro">${Math.round(log.pro||0)}p</span> • 
+                                <span class="text-macro-carb">${Math.round(log.carb||0)}c</span> • 
+                                <span class="text-macro-fat">${Math.round(log.fat||0)}f</span>
+                            </p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- Quick Add ---
+        function quickAdd() {
+            const input = document.getElementById('quick-cal-input');
+            const cals = parseInt(input.value);
+            if (!cals || cals <= 0) return;
+
+            const today = getTodayString();
+            vaultData[today].cal += cals;
+            vaultData[today].logs.push({
+                name: "Quick Calories",
+                amount: null,
+                cal: cals, pro: 0, carb: 0, fat: 0
+            });
+            
+            saveData();
+            input.value = '';
+            updateDashboard();
+        }
+
+        // --- API Search ---
+        async function searchFood() {
+            const query = document.getElementById('search-input').value;
+            if (!query) return;
+
+            document.getElementById('search-spinner').classList.remove('hidden');
+            document.getElementById('search-results').innerHTML = '';
+
+            try {
+                const res = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=15`);
+                const data = await res.json();
+                
+                document.getElementById('search-spinner').classList.add('hidden');
+                
+                if (data.products.length === 0) {
+                    document.getElementById('search-results').innerHTML = '<p class="text-gray-500 text-center">No foods found.</p>';
+                    return;
+                }
+
+                data.products.forEach(p => {
+                    if (!p.product_name) return;
+                    
+                    // Extract per 100g data (fallback to 0)
+                    const n = p.nutriments;
+                    const fCal = n['energy-kcal_100g'] || 0;
+                    const fPro = n['proteins_100g'] || 0;
+                    const fCarb = n['carbohydrates_100g'] || 0;
+                    const fFat = n['fat_100g'] || 0;
+
+                    // Only show items that actually have calorie data
+                    if(fCal === 0) return;
+
+                    const brand = p.brands ? p.brands.split(',')[0] : 'Generic';
+
+                    const card = document.createElement('div');
+                    card.className = "bg-gray-900 border border-gray-800 rounded-xl p-4 flex justify-between items-center active:bg-gray-800 transition-colors cursor-pointer";
+                    card.onclick = () => openModal(p.product_name, brand, fCal, fPro, fCarb, fFat);
+                    card.innerHTML = `
+                        <div class="truncate pr-4 flex-1">
+                            <p class="font-bold text-gray-200 truncate">${p.product_name}</p>
+                            <p class="text-xs text-gray-500">${brand}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-gray-300">${Math.round(fCal)}<span class="text-xs text-gray-500 font-normal"> /100g</span></p>
+                        </div>
+                        <div class="ml-3 text-macro-pro"><i class="fa-solid fa-plus-circle text-xl"></i></div>
+                    `;
+                    document.getElementById('search-results').appendChild(card);
+                });
+            } catch (err) {
+                document.getElementById('search-spinner').classList.add('hidden');
+                document.getElementById('search-results').innerHTML = '<p class="text-red-500 text-center">Error fetching data.</p>';
+            }
+        }
+
+        // --- Modal & Grams Calculation ---
+        function openModal(name, brand, cal100, pro100, carb100, fat100) {
+            selectedFood = { name: `${brand} ${name}`, cal100, pro100, carb100, fat100 };
+            document.getElementById('modal-food-name').innerText = selectedFood.name;
+            document.getElementById('grams-input').value = 100;
+            updatePreview();
+            
+            document.getElementById('grams-modal').classList.remove('hidden');
+            
+            // Add listener for real-time calculation
+            document.getElementById('grams-input').addEventListener('input', updatePreview);
+        }
+
+        function closeModal() {
+            document.getElementById('grams-modal').classList.add('hidden');
+            document.getElementById('grams-input').removeEventListener('input', updatePreview);
+            selectedFood = null;
+        }
+
+        function updatePreview() {
+            if(!selectedFood) return;
+            const grams = parseFloat(document.getElementById('grams-input').value) || 0;
+            const multiplier = grams / 100;
+
+            document.getElementById('prev-cal').innerText = Math.round(selectedFood.cal100 * multiplier);
+            document.getElementById('prev-pro').innerText = Math.round(selectedFood.pro100 * multiplier) + 'g';
+            document.getElementById('prev-carb').innerText = Math.round(selectedFood.carb100 * multiplier) + 'g';
+            document.getElementById('prev-fat').innerText = Math.round(selectedFood.fat100 * multiplier) + 'g';
+        }
+
+        function addSelectedFood() {
+            const grams = parseFloat(document.getElementById('grams-input').value);
+            if(!grams || grams <= 0) return;
+
+            const multiplier = grams / 100;
+            const finalCal = selectedFood.cal100 * multiplier;
+            const finalPro = selectedFood.pro100 * multiplier;
+            const finalCarb = selectedFood.carb100 * multiplier;
+            const finalFat = selectedFood.fat100 * multiplier;
+
+            const today = getTodayString();
+            vaultData[today].cal += finalCal;
+            vaultData[today].pro += finalPro;
+            vaultData[today].carb += finalCarb;
+            vaultData[today].fat += finalFat;
+            
+            vaultData[today].logs.push({
+                name: selectedFood.name,
+                amount: grams,
+                cal: finalCal, pro: finalPro, carb: finalCarb, fat: finalFat
+            });
+
+            saveData();
+            closeModal();
+            document.getElementById('search-input').value = '';
+            document.getElementById('search-results').innerHTML = '';
+            switchTab('dashboard'); // Takes user back to dash to see the update
+        }
+
+        // --- History ---
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            
+            // Get last 7 days
+            const dates = Object.keys(vaultData).sort().reverse().slice(0, 7);
+            
+            if(dates.length === 0) {
+                list.innerHTML = '<p class="text-gray-500">No history available.</p>';
+                return;
+            }
+
+            dates.forEach(date => {
+                const d = vaultData[date];
+                const dateObj = new Date(date + 'T00:00:00'); // Force local interpretation
+                const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                
+                list.innerHTML += `
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+                        <div class="flex justify-between items-center mb-2 border-b border-gray-800 pb-2">
+                            <span class="font-bold text-gray-300">${dateStr}</span>
+                            <span class="font-bold ${d.cal > GOALS.cal ? 'text-red-500' : 'text-macro-cal'}">${Math.round(d.cal)} kcal</span>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-400">
+                            <span><i class="fa-solid fa-drumstick-bite text-macro-pro mr-1"></i> ${Math.round(d.pro)}g</span>
+                            <span><i class="fa-solid fa-wheat-awn text-macro-carb mr-1"></i> ${Math.round(d.carb)}g</span>
+                            <span><i class="fa-solid fa-droplet text-macro-fat mr-1"></i> ${Math.round(d.fat)}g</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Run on load
+        window.onload = init;
+    </script>
+</body>
+</html>
